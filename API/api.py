@@ -1,18 +1,51 @@
 # Code from https://programminghistorian.org/en/lessons/creating-apis-with-python-and-flask
-# https://blog.miguelgrinberg.com/post/the-flask-mega-tutorial-part-i-hello-world
+# https://www.kdnuggets.com/2019/01/build-api-machine-learning-model-using-flask.html
 
-import flask #Imports the Flask library, making the code available to the rest of the application.
-from flask import request, jsonify
+# Imports the Flask library, making the code available to the rest of the application.
+from flask import Flask, redirect, url_for, flash, request, jsonify
 import sqlite3
+import numpy as np
+import pickle as p
+import json
 
-app = flask.Flask(__name__) # Creates the Flask application object, which contains data about the application and also methods (object functions) that tell the application to do certain actions.
-app.config["DEBUG"] = True #Starts the debugger. With this line, if your code is malformed, you’ll see an error when you visit your app. Otherwise you’ll only see a generic message such as Bad Gateway in the browser when there’s a problem with your code.
+app = Flask(
+    __name__)  # Creates the Flask application object, which contains data about the application and also methods (object functions) that tell the application to do certain actions.
+app.config[
+    "DEBUG"] = True  # Starts the debugger. With this line, if your code is malformed, you’ll see an error when you visit your app. Otherwise you’ll only see a generic message such as Bad Gateway in the browser when there’s a problem with your code.
+
+
+@app.route('/api/', methods=['POST'])
+def makecalc():
+    data = request.get_json()
+    X_to_predict = vect_X.transform(data)
+    y_predict = (model.predict(X_to_predict))
+    tags = np.argsort(y_predict[0,:])[::-1][:10].tolist()
+    scores = np.sort(y_predict[0,:])[::-1][:10]
+    feature_names_Y = vect_Y.get_feature_names()
+    prediction = {}
+    for tag,score in zip(tags,scores):
+        if score > 0 :
+            prediction[feature_names_Y[tag]]=str(score)
+
+    return jsonify(prediction)
+
+
+if __name__ == '__main__':
+    modelfile = 'models/MLP_clf.pickle'
+    vect_X_file = 'models/vect_X.pickle'
+    vect_Y_file = 'models/vect_Y_32.pickle'
+    model = p.load(open(modelfile, 'rb'))
+    vect_X = p.load(open(vect_X_file, 'rb'))
+    vect_Y = p.load(open(vect_Y_file, 'rb'))
+    app.run(debug=True, host='0.0.0.0')
+
 
 def dict_factory(cursor, row):
     d = {}
     for idx, col in enumerate(cursor.description):
         d[col[0]] = row[idx]
     return d
+
 
 # Create some test data for our catalog in the form of a list of dictionaries.
 books = [
@@ -33,20 +66,24 @@ books = [
      'published': '1975'}
 ]
 
+
 @app.route('/', methods=['GET'])
 def home():
     return '''<h1>Distant Reading Archive</h1>
 <p>A prototype API for distant reading of science fiction novels.</p>'''
 
+
 # A route to return all of the available entries in our catalog.
 @app.route('/api/v1/resources/books/all', methods=['GET'])
 def api_all():
     conn = sqlite3.connect('books.db')
-    conn.row_factory = dict_factory #lets the connection object know to use the dict_factory function we’ve defined, which returns items from the database as dictionaries rather than lists—these work better when we output them to JSON.
-    cur = conn.cursor() # the object that actually moves through the database to pull our data
-    all_books = cur.execute('SELECT * FROM books;').fetchall() #we execute an SQL query with the cur.execute method to pull out all available data (*) from the books table of our database.
+    conn.row_factory = dict_factory  # lets the connection object know to use the dict_factory function we’ve defined, which returns items from the database as dictionaries rather than lists—these work better when we output them to JSON.
+    cur = conn.cursor()  # the object that actually moves through the database to pull our data
+    all_books = cur.execute(
+        'SELECT * FROM books;').fetchall()  # we execute an SQL query with the cur.execute method to pull out all available data (*) from the books table of our database.
 
     return jsonify(all_books)
+
 
 @app.errorhandler(404)
 def page_not_found(e):
@@ -80,8 +117,9 @@ def api_filter():
     if not (id or published or author):
         return page_not_found(404)
 
-# Data passed through URLs like this (after the ?) are called query parameters. They’re a feature of HTTP used for filtering for specific kinds of data.
-    query = query[:-4] + ';' # To perfect our query, we remove the trailing ` AND and cap the query with the ;` required at the end of all SQL statements:
+    # Data passed through URLs like this (after the ?) are called query parameters. They’re a feature of HTTP used for filtering for specific kinds of data.
+    query = query[
+            :-4] + ';'  # To perfect our query, we remove the trailing ` AND and cap the query with the ;` required at the end of all SQL statements:
 
     conn = sqlite3.connect('books.db')
     conn.row_factory = dict_factory
@@ -92,16 +130,18 @@ def api_filter():
     return jsonify(results)
 
     # Create an empty list for our results
+
+
 #    results = []
 
-    # Loop through the data and match results that fit the requested ID.
-    # IDs are unique, but other fields might return many results
+# Loop through the data and match results that fit the requested ID.
+# IDs are unique, but other fields might return many results
 #    for book in books:
 #        if book['id'] == id:
 #            results.append(book)
 
-    # Use the jsonify function from Flask to convert our list of
-    # Python dictionaries to the JSON format.
+# Use the jsonify function from Flask to convert our list of
+# Python dictionaries to the JSON format.
 #    return jsonify(results)
 
-app.run() # A method that runs the application server.
+# app.run()  # A method that runs the application server.
