@@ -4,8 +4,11 @@
 # Imports the Flask library, making the code available to the rest of the application.
 from flask import Flask, request, jsonify
 import pickle as p
+import os
 from tensorflow.keras.models import load_model
 from keras.preprocessing.sequence import pad_sequences
+
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 app = Flask(
     __name__)  # Creates the Flask application object, which contains data about the application and also methods (
