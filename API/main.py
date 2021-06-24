@@ -35,7 +35,7 @@ def load__model():
     modelfile = MODEL_FOLDER + 'keras_embedding.h5'
     vect_X_file = MODEL_FOLDER + 'keras_tokenizer_X.pickle'
     vect_Y_file = MODEL_FOLDER + 'keras_tokenizer_Y.pickle'
-    model = load_model(modelfile)
+    model = load_model(modelfile, compile=False)
     vect_X = p.load(open(vect_X_file, 'rb'))
     vect_Y = p.load(open(vect_Y_file, 'rb'))
 

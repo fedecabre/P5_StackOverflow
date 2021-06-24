@@ -2,7 +2,8 @@ import requests
 import json
 import pandas as pd
 
-url = 'http://0.0.0.0:5000/api/'
+url = 'http://ec2-35-181-51-177.eu-west-3.compute.amazonaws.com:5000/api/'
+#url = "http://0.0.0.0:5000/api/"
 
 dtypes_questions = {'Id':'int32', 'Score': 'int16', 'Title': 'str',
                     'Body': 'str', 'Title_raw': 'str', 'Text': 'str',
